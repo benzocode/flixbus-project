@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+
+# VSCode
+.vscode/
+
+# Node
+node_modules/
+dist/
