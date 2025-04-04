@@ -134,7 +134,7 @@ def find_cheapest_trips(from_city, to_city, start_date, end_date):
     ]
 
     # Run in parallel using 20 threads
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    with ThreadPoolExecutor(max_workers=30) as executor:
         results = list(executor.map(fetch_trip_for_date, date_list))
 
     # Filter out None values (no trips)
