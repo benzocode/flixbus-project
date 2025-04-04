@@ -12,3 +12,5 @@ venv/
 # Node
 node_modules/
 dist/
+__pycache__/
+*.pyc
