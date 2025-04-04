@@ -5,6 +5,8 @@ from time import sleep
 from dateutil import parser
 from datetime import timedelta
 import os
+from concurrent.futures import ThreadPoolExecutor
+
 
 os.chdir('/Users/benstein/Desktop/Python')
 
@@ -93,7 +95,7 @@ def get_trip_details_for_date(date_str, from_city_id, to_city_id):
                     arrival_time = "N/A"
                     duration = "N/A"
 
-                if price is not None and price < min_price:
+                if price is not None and price > 0 and price < min_price:
                     min_price = price
                     best_trip = {
                         "Date": date_str,
@@ -116,21 +118,28 @@ def find_cheapest_trips(from_city, to_city, start_date, end_date):
     if not from_city_id or not to_city_id:
         return {"error": "Invalid city name(s)."}
 
-    results = []
-    current_date = start_date
-
-    while current_date <= end_date:
-        date_str = current_date.strftime("%d.%m.%Y")
+    def fetch_trip_for_date(date):
+        date_str = date.strftime("%d.%m.%Y")
         trip_info = get_trip_details_for_date(date_str, from_city_id, to_city_id)
         if trip_info:
             print(f"{date_str} → ${trip_info['Price (USD)']} | {trip_info['Departure Time']} → {trip_info['Arrival Time']} | {trip_info['Duration']}")
-            results.append(trip_info)
         else:
             print(f"{date_str} → No trips found")
-        current_date += datetime.timedelta(days=1)
-        sleep(1)
+        return trip_info
 
-    return results
+    # Generate list of dates
+    date_list = [
+        start_date + datetime.timedelta(days=i)
+        for i in range((end_date - start_date).days + 1)
+    ]
+
+    # Run in parallel using 20 threads
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        results = list(executor.map(fetch_trip_for_date, date_list))
+
+    # Filter out None values (no trips)
+    return [trip for trip in results if trip]
+
 
 # Example usage
 if __name__ == "__main__":
