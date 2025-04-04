@@ -91,21 +91,30 @@ def search_trips(request: TripSearchRequest):
     if not trips:
         raise HTTPException(status_code=404, detail="No trips found.")
 
-    # Find the cheapest trip based on price
-    cheapest_trip = min(trips, key=lambda trip: trip['Price (USD)'])
+    # Group by date and keep the cheapest trip with price > 0 for each day
+    daily_cheapest = {}
+    for trip in trips:
+        date = trip["Date"]
+        price = trip["Price (USD)"]
+        if price <= 0:
+            continue
+        if date not in daily_cheapest or price < daily_cheapest[date]["Price (USD)"]:
+            daily_cheapest[date] = trip
 
-    # Format times using the helper function
-    departure_time, arrival_time = format_times(cheapest_trip["Departure Time"], cheapest_trip["Duration"])
+    cheapest_trips_per_day = list(daily_cheapest.values())
 
-    # Return the cheapest trip with correct times
+
+        # Format times for each trip
+    for trip in cheapest_trips_per_day:
+        departure_time, arrival_time = format_times(trip["Departure Time"], trip["Duration"])
+        trip["Departure Time"] = departure_time
+        trip["Arrival Time"] = arrival_time
+
+    # Return all cheapest trips per day
     return {
-        "cheapest_trip": {
-            "Date": cheapest_trip["Date"],
-            "Price (USD)": cheapest_trip["Price (USD)"],
-            "Departure Time": departure_time,
-            "Arrival Time": arrival_time,
-            "Duration": cheapest_trip["Duration"]
-        }
+        "top_trips": cheapest_trips_per_day
     }
+
+
 
 
